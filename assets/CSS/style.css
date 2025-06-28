@@ -1,0 +1,116 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* Body Styling */
+body {
+  background: #f4f7fa;
+  color: #333;
+  padding: 20px;
+  min-height: 100vh;
+}
+
+/* Container */
+.container {
+  max-width: 500px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+/* Headings */
+h1, h2, h3 {
+  text-align: center;
+  margin-bottom: 20px;
+  color: #1e88e5;
+}
+
+/* Form Styles */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="file"],
+input[type="number"] {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 16px;
+}
+
+/* Buttons */
+button {
+  padding: 12px;
+  background-color: #1e88e5;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s ease;
+}
+
+button:hover {
+  background-color: #1565c0;
+}
+
+/* Document List */
+#docList li {
+  list-style: none;
+  padding: 10px;
+  background: #e3f2fd;
+  border-radius: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Document Links */
+#docList a {
+  color: #0d47a1;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+#docList button {
+  background-color: #e53935;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+}
+
+#docList button:hover {
+  background-color: #c62828;
+}
+
+/* Profile Info */
+.profile-info {
+  background: #e0f7fa;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 15px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .container {
+    padding: 20px;
+    margin: 10px;
+  }
+
+  button {
+    font-size: 14px;
+  }
+}

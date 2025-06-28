@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Secure Document Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif;
+      background-color: #f3f4f6;
+    }
+    .navbar {
+      background-color: #1e3a8a;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .navbar h1 {
+      margin: 0;
+      font-size: 1.5rem;
+    }
+    .main-wrapper {
+      display: flex;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+    .container, .profile-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .container {
+      flex: 2;
+    }
+    .profile-box {
+      flex: 1;
+      max-height: fit-content;
+    }
+    h2, h3 {
+      color: #1e3a8a;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      margin: 1rem 0;
+      padding: 1rem;
+      background-color: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 0.75rem;
+    }
+    .doc-title {
+      font-weight: 600;
+    }
+    .doc-url {
+      color: #2563eb;
+      display: block;
+      margin: 0.5rem 0;
+    }
+    .btn-delete {
+      background-color: #dc2626;
+      margin-top: 0.5rem;
+    }
+    .btn-delete:hover {
+      background-color: #b91c1c;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <div class="navbar">
+    <h1>SecureDocs</h1>
+  </div>
+
+  <div class="main-wrapper">
+    <div class="container">
+      <h2>📎 Upload Document</h2>
+      <input type="text" id="docTitle" placeholder="Document Title">
+      <input type="url" id="docURL" placeholder="Document Public URL">
+      <button onclick="uploadDoc()">Upload</button>
+
+      <h3>📄 My Documents</h3>
+      <ul id="docList"></ul>
+
+      <h3>🔗 Share Document</h3>
+      <input type="text" id="shareDocId" placeholder="Document ID to Share">
+      <input type="text" id="shareToEmail" placeholder="Recipient Email">
+      <button onclick="shareDocument()">Share</button>
+    </div>
+
+    <div class="profile-box">
+      <h2>👤 My Profile</h2>
+      <p><strong>Aadhaar:</strong> <span id="aadhaar"></span></p>
+      <p><strong>Email:</strong> <span id="email"></span></p>
+      <p><strong>UID:</strong> <span id="uid"></span></p>
+      <button onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <script>
+    let currentUser;
+
+    firebase.auth().onAuthStateChanged(user => {
+      if (user) {
+        currentUser = user;
+        loadDocs();
+        loadProfile();
+      } else {
+        window.location.href = 'login.html';
+      }
+    });
+
+    function loadProfile() {
+      firebase.firestore().collection('users').doc(currentUser.uid).get().then(doc => {
+        const data = doc.data();
+        document.getElementById('aadhaar').innerText = data.aadhaar;
+        document.getElementById('email').innerText = data.email;
+        document.getElementById('uid').innerText = currentUser.uid;
+      });
+    }
+
+    function uploadDoc() {
+      const title = document.getElementById('docTitle').value;
+      const url = document.getElementById('docURL').value;
+      if (!title || !url) return alert('All fields are required');
+
+      firebase.firestore().collection('documents').add({
+        uid: currentUser.uid,
+        title: title,
+        url: url,
+        sharedWith: []
+      }).then(() => {
+        alert('Document Uploaded');
+        loadDocs();
+      });
+    }
+
+    function loadDocs() {
+      firebase.firestore().collection('documents')
+        .where('uid', '==', currentUser.uid)
+        .get().then(snapshot => {
+          const list = document.getElementById('docList');
+          list.innerHTML = '';
+          snapshot.forEach(doc => {
+            const data = doc.data();
+            const li = document.createElement('li');
+            li.innerHTML = `
+              <div class="doc-title">${data.title}</div>
+              <a class="doc-url" href="${data.url}" target="_blank">${data.url}</a>
+              <div>ID: ${doc.id}</div>
+              <button class="btn-delete" onclick="deleteDoc('${doc.id}')">🗑️ Delete</button>
+            `;
+            list.appendChild(li);
+          });
+        });
+    }
+
+    function deleteDoc(id) {
+      if (confirm('Delete this document?')) {
+        firebase.firestore().collection('documents').doc(id).delete().then(loadDocs);
+      }
+    }
+
+    function shareDocument() {
+  const docId = document.getElementById('shareDocId').value.trim();
+  const email = document.getElementById('shareToEmail').value.trim();
+
+  if (!docId || !email) {
+    alert("Please enter both Document ID and Recipient Email");
+    return;
+  }
+
+  firebase.firestore().collection('shared_docs').add({
+    docId: docId,
+    sharedWith: email,
+    sharedBy: currentUser.email,
+    timestamp: Date.now()
+  })
+  .then(() => {
+    alert("✅ Document shared successfully!");
+    document.getElementById('shareDocId').value = "";
+    document.getElementById('shareToEmail').value = "";
+  })
+  .catch(error => {
+    console.error("Share Error:", error);
+    alert("❌ Share Error: " + error.message);
+  });
+}
+
+
+    function logout() {
+      firebase.auth().signOut().then(() => window.location.href = 'login.html');
+    }
+  </script>
+</body>
+</html>
+

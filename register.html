@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register - SecureDocs</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f3f4f6;
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+    }
+    .container {
+      max-width: 500px;
+      background: white;
+      margin: 5% auto;
+      padding: 2rem;
+      border-radius: 1rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #1e3a8a;
+    }
+    input, button {
+      width: 100%;
+      padding: 0.75rem;
+      margin: 0.5rem 0;
+      border: 1px solid #ccc;
+      border-radius: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1d4ed8;
+    }
+    #recaptcha-container {
+      margin-top: 1rem;
+    }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-firestore-compat.js"></script>
+  <script src="firebase-config.js"></script>
+</head>
+<body>
+  <div class="container">
+    <h2>Register</h2>
+    <form id="registerForm">
+      <input type="text" id="aadhaar" placeholder="Aadhaar Number" required>
+      <input type="email" id="email" placeholder="Email" required>
+      <input type="text" id="phone" placeholder="Phone (+91...)" required>
+      <input type="password" id="password" placeholder="Password" required>
+      <div id="recaptcha-container"></div>
+      <button type="button" onclick="sendOTP()">Send OTP</button>
+      <input type="text" id="otp" placeholder="Enter OTP">
+      <button type="submit">Verify & Register</button>
+    </form>
+  </div>
+
+  <script>
+  let confirmationResult;
+
+  function sendOTP() {
+    const phone = document.getElementById('phone').value;
+
+    if (!phone.startsWith('+')) {
+      alert('Phone number must include country code. Example: +919876543210');
+      return;
+    }
+
+    // Setup reCAPTCHA verifier
+    window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', {
+      size: 'normal',
+      callback: (response) => {
+        // reCAPTCHA solved
+      },
+      'expired-callback': () => {
+        alert('reCAPTCHA expired. Please try again.');
+      }
+    });
+
+    recaptchaVerifier.render().then(widgetId => {
+      window.recaptchaWidgetId = widgetId;
+
+      firebase.auth().signInWithPhoneNumber(phone, recaptchaVerifier)
+        .then(result => {
+          confirmationResult = result;
+          alert('OTP sent to ' + phone);
+        })
+        .catch(error => {
+          console.error(error);
+          alert('OTP Error: ' + error.message);
+        });
+    });
+  }
+
+  document.getElementById('registerForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+
+    const code = document.getElementById('otp').value;
+    const aadhaar = document.getElementById('aadhaar').value;
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+
+    if (!confirmationResult) {
+      alert("Please send OTP before verifying.");
+      return;
+    }
+
+    confirmationResult.confirm(code)
+      .then(() => {
+        return firebase.auth().createUserWithEmailAndPassword(email, password);
+      })
+      .then(cred => {
+        return firebase.firestore().collection('users').doc(cred.user.uid).set({
+          aadhaar,
+          email,
+          uid: cred.user.uid
+        });
+      })
+      .then(() => {
+        alert('Registered Successfully');
+        location.href = 'login.html';
+      })
+      .catch(err => {
+        console.error(err);
+        alert('Registration Error: ' + err.message);
+      });
+  });
+</script>
+
+</body>
+</html>
+
