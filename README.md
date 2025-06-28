@@ -57,6 +57,12 @@
 
 ## 🚀 How to Set Up and Run
 
+### 🌐 Live Demo
+
+🔗 [Click here to view the live demo](https://your-username.github.io/SecureDocs/)  
+📱 Use test phone number `+919353994508` with OTP `123456` for login
+
+
 ### 🔧 Firebase Setup
 
 1. Create a new Firebase project at [https://console.firebase.google.com](https://console.firebase.google.com)
